@@ -35,3 +35,20 @@ tests:
     - -with-rtsopts=-N
     dependencies:
     - liberation
+
+benchmarks:
+  liberation-bench:
+    main:               Main.hs
+    source-dirs:        benchmark
+    ghc-options:
+      - -threaded
+      - -rtsopts
+      - -with-rtsopts=-N
+      - -O2
+      - -fspecialize
+    dependencies:
+      - liberation
+      - criterion
+      - mtl
+      - polysemy
+

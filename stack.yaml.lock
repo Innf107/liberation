@@ -10,4 +10,11 @@ snapshots:
     sha256: 03181cdbeb671eb605bbcf6f285bea4d094b6ac7433a0e14a9f1dd54ad995938
     url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/17/11.yaml
     size: 567672
-packages: []
+packages:
+- original:
+    hackage: polysemy-1.5.0.0@sha256:7edb723e7f703fe273a40e43fe33f6e8f7659fe60759e8698def1481262d314d,6246
+  completed:
+    pantry-tree:
+      sha256: 7b7d379751f79f0e0e5afcdf3d8092e5b8e04515710f21f514aa8f29ce4835f4
+      size: 4438
+    hackage: polysemy-1.5.0.0@sha256:7edb723e7f703fe273a40e43fe33f6e8f7659fe60759e8698def1481262d314d,6246
