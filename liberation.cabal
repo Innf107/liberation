@@ -28,8 +28,10 @@ library
       Liberation
       Liberation.Effect
       Liberation.Error
+      Liberation.Internal.Effect
       Liberation.Internal.Nat
       Liberation.Internal.RT
+      Liberation.Internal.TH
       Liberation.Internal.TypeUtil
       Liberation.Reader
       Liberation.State
@@ -39,6 +41,7 @@ library
       src
   build-depends:
       base >=4.7 && <5
+    , template-haskell
   default-language: Haskell2010
 
 test-suite liberation-test
@@ -52,6 +55,7 @@ test-suite liberation-test
   build-depends:
       base >=4.7 && <5
     , liberation
+    , template-haskell
   default-language: Haskell2010
 
 benchmark liberation-bench
@@ -74,4 +78,5 @@ benchmark liberation-bench
     , liberation
     , mtl
     , polysemy
+    , template-haskell
   default-language: Haskell2010

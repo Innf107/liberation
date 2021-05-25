@@ -26,7 +26,7 @@ test2 = runReader True test
 test :: Has '[State Int, Error String, Reader Bool] es => RT es Int
 test = do
     x <- get @Int
-    c <- ask @Bool
+    c <- ask
     when c $ put (x * 2)
     x' <- get
     when (x' > 10) $ throw "Too large"

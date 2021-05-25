@@ -17,7 +17,7 @@ type family At ix xs where
 
 type IxOf :: k -> [k] -> Nat
 type family IxOf x xs where
-    IxOf x '[] = TypeError (Text "IxOf: List missing type " :<>: ShowType x)
+    IxOf x '[] = TypeError (Text "Unhandled Effect: " :<>: ShowType x)
     IxOf x (x : xs) = Z
     IxOf x (y : ys) = S (IxOf x ys)
 
