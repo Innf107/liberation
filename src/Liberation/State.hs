@@ -1,5 +1,5 @@
 {-# LANGUAGE ScopedTypeVariables, FlexibleInstances, FlexibleContexts,  MultiParamTypeClasses,
-    TypeOperators, DataKinds, MonoLocalBinds, UndecidableInstances #-}
+    TypeOperators, DataKinds, MonoLocalBinds, UndecidableInstances, RankNTypes #-}
 module Liberation.State where
 
 import Control.Monad.IO.Class
@@ -9,9 +9,9 @@ import Data.IORef
 import Control.Concurrent.MVar
 
 data RState s = RState {
-    _get :: IO s
-,   _put :: s -> IO ()
-,   _modify :: (s -> s) -> IO ()
+    _get    :: forall es. Has '[] es => RT es s
+,   _put    :: forall es. Has '[] es => s -> RT es ()
+,   _modify :: forall es. Has '[] es => (s -> s) -> RT es ()
 }
 
 class State s es where
@@ -22,30 +22,30 @@ class State s es where
 instance forall r es. (MonadIO (RT es), GetRT (RState r) es) => State r es where
     get = do
         r <- getRT
-        liftIO (_get r)
+        _get r
     put s = do
         r <- getRT
-        liftIO (_put r s)
+        _put r s
     modify f = do
         r <- getRT
-        liftIO (_modify r f)
+        _modify r f
 
 evalStateIORef :: (MonadIO (RT es)) => s -> RT (RState s : es) a -> RT es a
 evalStateIORef s rt = do
     ref <- liftIO $ newIORef s
     runRT (RState {
-        _get = readIORef ref
-    ,   _put = writeIORef ref
-    ,   _modify = modifyIORef ref
+        _get    = liftIO $ readIORef ref
+    ,   _put    = liftIO . writeIORef ref
+    ,   _modify = liftIO . modifyIORef ref
     }) rt
 
 runStateIORef :: (MonadIO (RT es)) => s -> RT (RState s : es) a -> RT es (s, a)
 runStateIORef s rt = do
     ref <- liftIO $ newIORef s
     a <- runRT (RState {
-            _get = readIORef ref
-        ,   _put = writeIORef ref
-        ,   _modify = modifyIORef ref
+            _get    = liftIO $ readIORef ref
+        ,   _put    = liftIO . writeIORef ref
+        ,   _modify = liftIO . modifyIORef ref
         }) rt
     rs <- liftIO $ readIORef ref
     pure (rs, a)
@@ -57,9 +57,9 @@ runStateMVar :: (MonadIO (RT es)) => s -> RT (RState s : es) a -> RT es (s, a)
 runStateMVar s rt = do
     mv <- liftIO $ newMVar s
     a <- runRT (RState {
-        _get = readMVar mv
-    ,   _put = \x -> modifyMVar_ mv (\_ -> pure x) 
-    ,   _modify = \f -> modifyMVar_ mv (\x -> pure (f x)) 
+        _get    = liftIO $ readMVar mv
+    ,   _put    = \x -> liftIO $ modifyMVar_ mv (\_ -> pure x) 
+    ,   _modify = \f -> liftIO $ modifyMVar_ mv (\x -> pure (f x)) 
     }) rt
     rs <- liftIO $ readMVar mv
     pure (rs, a)

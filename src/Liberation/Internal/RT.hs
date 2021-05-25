@@ -2,6 +2,7 @@
    MultiParamTypeClasses, PolyKinds, TypeOperators, UndecidableInstances, GADTs, StandaloneDeriving, TypeApplications,
    ScopedTypeVariables#-}
 {-# LANGUAGE AllowAmbiguousTypes #-}
+{-# LANGUAGE LambdaCase #-}
 module Liberation.Internal.RT where
 
 import Liberation.Internal.TypeUtil
@@ -31,7 +32,9 @@ instance (Applicative (RT xs)) => Applicative (RT (x : xs)) where
     RTCons af <*> RTCons ax = RTCons (\x -> af x <*> ax x)
 
 instance Monad (RT '[]) where
-    ma >>= f = joinRTNil $ f <$> ma
+    (RTNil ma) >>= f = RTNil $ ma >>= \case
+        x -> case f x of (RTNil io) -> io
+            --joinRTNil $ f <$> ma
 
 joinRTNil :: RT '[] (RT '[] a) -> RT '[] a
 joinRTNil (RTNil x) = RTNil $ join $ (\(RTNil a) -> a) <$> x
