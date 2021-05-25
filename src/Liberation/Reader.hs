@@ -5,11 +5,14 @@ module Liberation.Reader where
 import Liberation
 import Liberation.Effect
   
+import Liberation.Internal.RT
+import Liberation.Internal.TypeUtil
+  
 data RReader r = RReader {
     _ask :: forall es. Has '[] es => RT es r
 }
 
-class Reader r es where
+class Effect (RReader r) es => Reader r es where
     ask :: RT es r
     
 instance forall r es. (MonadIO (RT es), GetRT (RReader r) es) => Reader r es where

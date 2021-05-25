@@ -13,7 +13,7 @@ data RError e = RError {
     _throw :: forall a es. Has '[] es => e -> RT es a
 }
 
-class Error e es where
+class Effect (RError e) es => Error e es where
     throw :: forall a. e -> RT es a
 
 instance forall r es. (MonadIO (RT es), GetRT (RError r) es) => Error r es where

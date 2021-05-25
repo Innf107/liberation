@@ -2,10 +2,11 @@
     TypeOperators, DataKinds, MonoLocalBinds, UndecidableInstances, RankNTypes #-}
 module Liberation.State where
 
-import Control.Monad.IO.Class
-import Liberation.Internal.RT
+import Liberation
+import Liberation.Effect
 
 import Data.IORef
+import Control.Monad.IO.Class
 import Control.Concurrent.MVar
 
 data RState s = RState {
@@ -14,7 +15,7 @@ data RState s = RState {
 ,   _modify :: forall es. Has '[] es => (s -> s) -> RT es ()
 }
 
-class State s es where
+class Effect (RState s) es => State s es where
     get :: RT es s
     put :: s -> RT es ()
     modify :: (s -> s) -> RT es ()
@@ -30,7 +31,7 @@ instance forall r es. (MonadIO (RT es), GetRT (RState r) es) => State r es where
         r <- getRT
         _modify r f
 
-evalStateIORef :: (MonadIO (RT es)) => s -> RT (RState s : es) a -> RT es a
+evalStateIORef :: forall s a es. (MonadIO (RT es)) => s -> RT (RState s : es) a -> RT es a
 evalStateIORef s rt = do
     ref <- liftIO $ newIORef s
     runRT (RState {
@@ -39,7 +40,7 @@ evalStateIORef s rt = do
     ,   _modify = liftIO . modifyIORef ref
     }) rt
 
-runStateIORef :: (MonadIO (RT es)) => s -> RT (RState s : es) a -> RT es (s, a)
+runStateIORef :: forall s a es. (MonadIO (RT es)) => s -> RT (RState s : es) a -> RT es (s, a)
 runStateIORef s rt = do
     ref <- liftIO $ newIORef s
     a <- runRT (RState {
@@ -50,10 +51,10 @@ runStateIORef s rt = do
     rs <- liftIO $ readIORef ref
     pure (rs, a)
 
-execStateIORef :: (MonadIO (RT es)) => s -> RT (RState s : es) a -> RT es s
+execStateIORef :: forall s a es. (MonadIO (RT es)) => s -> RT (RState s : es) a -> RT es s
 execStateIORef s rt = fst <$> runStateIORef s rt
 
-runStateMVar :: (MonadIO (RT es)) => s -> RT (RState s : es) a -> RT es (s, a)
+runStateMVar :: forall s a es. (MonadIO (RT es)) => s -> RT (RState s : es) a -> RT es (s, a)
 runStateMVar s rt = do
     mv <- liftIO $ newMVar s
     a <- runRT (RState {
