@@ -10,7 +10,7 @@ import Liberation.Internal.RT
 import Liberation.Internal.TypeUtil
 
 main :: IO ()
-main = print =<< run (runStateIORef @Int 5 $ runError @String $ runReader 'B' test3)
+main = print =<< run (runStateIORef @Int 6 $ runError @String $ mapError (<> "!!!") $ runReader 'B' test3)
 
 test3 :: (Has '[State Int, Error String, Reader Char] es) => RT es Int
 test3 = do

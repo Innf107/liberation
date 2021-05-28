@@ -15,6 +15,8 @@ import Data.Type.Equality
 
 import Unsafe.Coerce
 
+import Control.Monad.IO.Unlift
+
 data RT (xs :: [Type]) a where
     RTNil :: IO a -> RT '[] a
     RTCons :: (x -> RT xs a) -> RT (x : xs) a
@@ -50,6 +52,12 @@ instance (MonadIO (RT xs)) => MonadIO (RT (x : xs)) where
     liftIO io = RTCons $ \_ -> liftIO io
 
 
+instance MonadUnliftIO (RT '[]) where
+    withRunInIO f = liftIO (f run)
+
+instance MonadUnliftIO (RT xs) => MonadUnliftIO (RT (x : xs)) where
+    withRunInIO f = RTCons $ \x -> withRunInIO (\rio -> f (\(RTCons g) -> rio (g x)))
+
 class GetAt (ix :: Nat) xs where
     getAt :: RT xs (At ix xs)
 
@@ -77,6 +85,6 @@ runRT :: x -> RT (x : xs) a -> RT xs a
 runRT x (RTCons f) = f x
 
 type Has :: [[Type] -> Constraint] -> [Type] -> Constraint
-type Has cs es = (MonadIO (RT es), All cs es)
+type Has cs es = (MonadUnliftIO (RT es), All cs es)
 
 

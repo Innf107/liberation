@@ -7,6 +7,8 @@ import Liberation
 import Liberation.Effect
 import Data.Typeable
 
+import Control.Monad.IO.Unlift
+
 import Control.Exception hiding (throw)
 
 data IError e = IError {
@@ -37,27 +39,18 @@ instance Show (LiberationErrorException e) where
 instance Typeable e => Exception (LiberationErrorException e)
 
 
-runError :: (Typeable e, CatchRT es, Has '[] es) => RT (IError e : es) a -> RT es (Either e a)
-runError rt = (Right <$> runRT IError {
+runError :: (Typeable e, Has '[] es) => RT (IError e : es) a -> RT es (Either e a)
+runError rt = withRunInIO $ \rio -> rio (Right <$> runRT IError {
         _throw = \e -> liftIO $ throwIO (LiberationErrorException e)
     } rt)
-   `catchRT` (\(LiberationErrorException e) -> pure $ Left e)
--- TODO: Probably Needs MonadUnliftIO or MonadBaseControl
+   `catch` (\(LiberationErrorException e) -> pure $ Left e)
 
-class CatchRT es where
-    catchRT :: (Exception e) => RT es a -> (e -> RT es a) -> RT es a
 
-instance CatchRT '[] where
-    catchRT (RTNil io) h = RTNil $ io `catch` (\x -> case h x of RTNil y -> y)
-
-instance (CatchRT es) => CatchRT (e : es) where
-    catchRT (RTCons f) h = RTCons (\x -> f x `catchRT` (\e -> case h e of RTCons hf -> hf x))
-
-mapError :: forall e1 e2 a es. (Has '[Error e2] es, CatchRT es, Typeable e1) => (e1 -> e2) -> RT (IError e1 : es) a -> RT es a
-mapError f rt = (runRT IError {
+mapError :: forall e1 e2 a es. (Has '[Error e2] es, Typeable e1) => (e1 -> e2) -> RT (IError e1 : es) a -> RT es a
+mapError f rt = withRunInIO $ \rio -> rio (runRT IError {
                _throw = \e -> liftIO $ throwIO (LiberationErrorException e)
            } rt)
-          `catchRT` (\(LiberationErrorException e) -> throw (f e))
+          `catch` (\(LiberationErrorException e) -> rio $ throw (f e))
 
 fromEither :: (Has '[Error e] es) => Either e a -> RT es a
 fromEither (Left e) = throw e

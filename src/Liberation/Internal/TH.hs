@@ -4,7 +4,7 @@ module Liberation.Internal.TH where
 import Language.Haskell.TH
 
 import Control.Monad
-import Control.Monad.IO.Class
+import Control.Monad.IO.Unlift
 
 import qualified Data.Kind
 import Liberation.Internal.RT (RT, GetRT(..))
@@ -40,7 +40,7 @@ mkEffect impl = do
     sequence [
             classD (pure (tyCxt <> [effectCxt])) className (tyVars <> [esTyVar]) [] (map pure classFields)
         ,   instanceD
-                (sequence [[t|$(conT ''MonadIO) (RT $(pure esTy))|], [t|$(conT ''GetRT) $(foldl appT (conT tyName) (map pure tyVarTys)) $(pure esTy)|]])
+                (sequence [[t|$(conT ''MonadUnliftIO) (RT $(pure esTy))|], [t|$(conT ''GetRT) $(foldl appT (conT tyName) (map pure tyVarTys)) $(pure esTy)|]])
                 (appT (foldl appT (conT className) (map pure tyVarTys)) (pure $ esTy))
                 (flip map (filter (nameStartsWith '_') fields) \(ifname, _, fty) -> do
                     let fname = mkName (drop 1 (nameBase ifname))

@@ -42,6 +42,7 @@ library
   build-depends:
       base >=4.7 && <5
     , template-haskell
+    , unliftio-core
   default-language: Haskell2010
 
 test-suite liberation-test
@@ -56,6 +57,7 @@ test-suite liberation-test
       base >=4.7 && <5
     , liberation
     , template-haskell
+    , unliftio-core
   default-language: Haskell2010
 
 benchmark liberation-bench
@@ -79,4 +81,5 @@ benchmark liberation-bench
     , mtl
     , polysemy
     , template-haskell
+    , unliftio-core
   default-language: Haskell2010
